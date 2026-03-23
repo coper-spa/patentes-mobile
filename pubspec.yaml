@@ -1,0 +1,44 @@
+name: inspectores_municipales_app
+description: App Flutter para inspectores municipales con OAuth2 PKCE y rutas de inspeccion.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.5.1
+  http: ^1.2.2
+  flutter_secure_storage: ^9.2.2
+  flutter_dotenv: ^5.2.1
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  url_launcher: ^6.3.0
+  intl: ^0.19.0
+  table_calendar: ^3.1.2
+  image_picker: ^1.1.2
+  uni_links: ^0.5.1
+  crypto: ^3.0.3
+  google_fonts: ^6.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: assets/branding/app_icon_geo.png
+  adaptive_icon_background: "#005B8F"
+  adaptive_icon_foreground: assets/branding/app_icon_geo.png
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
+    - assets/branding/
