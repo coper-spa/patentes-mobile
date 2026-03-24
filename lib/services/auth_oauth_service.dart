@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:uni_links/uni_links.dart';
+import 'package:app_links/app_links.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/config/app_config.dart';
@@ -148,16 +148,17 @@ class AuthOAuthService {
     Uri authUri,
     String expectedState,
   ) async {
-    final initialUri = await getInitialUri();
+    final appLinks = AppLinks();
+    final initialUri = await appLinks.getInitialLink();
     if (_isCallbackUri(initialUri)) {
       return _extractCodeOrThrow(initialUri!, expectedState);
     }
 
     final completer = Completer<String>();
-    late final StreamSubscription<Uri?> sub;
-    sub = uriLinkStream.listen(
+    late final StreamSubscription<Uri> sub;
+    sub = appLinks.uriLinkStream.listen(
       (uri) {
-        if (uri == null || !_isCallbackUri(uri)) {
+        if (!_isCallbackUri(uri)) {
           return;
         }
 
