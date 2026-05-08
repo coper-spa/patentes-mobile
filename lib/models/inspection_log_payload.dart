@@ -6,6 +6,7 @@ class InspectionLogPayload {
     required this.arrearVisitAssignmentId,
     required this.arrearManagementTypeId,
     required this.managementStatus,
+    this.visitStateId,
     required this.managedAt,
     required this.observation,
     this.hasEvidence,
@@ -17,6 +18,7 @@ class InspectionLogPayload {
   final String arrearVisitAssignmentId;
   final String arrearManagementTypeId;
   final String managementStatus;
+  final String? visitStateId;
   final DateTime managedAt;
   final String observation;
   final bool? hasEvidence;
@@ -29,6 +31,10 @@ class InspectionLogPayload {
       'managed_at': _formatDate(managedAt),
       'observation': observation,
     };
+
+    if (visitStateId != null && visitStateId!.trim().isNotEmpty) {
+      payload['visit_state_id'] = visitStateId!.trim();
+    }
 
     if (patentArrearId != null && patentArrearId!.trim().isNotEmpty) {
       payload['patent_arrear_id'] = patentArrearId!.trim();

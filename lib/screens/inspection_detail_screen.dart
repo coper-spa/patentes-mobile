@@ -24,7 +24,23 @@ class InspectionDetailScreen extends ConsumerWidget {
       body: detailState.when(
         data: (inspection) {
           debugPrint(
-            '[InspectionDetailScreen] openDetail inspectionId=${inspection.id} contribuyenteId=${inspection.contribuyenteId} patentId=${inspection.patentId}',
+            '[InspectionDetailScreen] === INSPECTION DETAIL DATA ===\n'
+            'ID: ${inspection.id}\n'
+            'Business: ${inspection.businessName}\n'
+            'Address: ${inspection.address}\n'
+            'Type: ${inspection.inspectionType}\n'
+            'Reason: ${inspection.visitReasonLabel}\n'
+            'Status: ${inspection.status}\n'
+            'Sequence: ${inspection.sequence}\n'
+            'Contribuyente ID: ${inspection.contribuyenteId}\n'
+            'Patent ID: ${inspection.patentId}\n'
+            'Patent Arrear ID: ${inspection.patentArrearId}\n'
+            'Visitable Type: ${inspection.visitableType}\n'
+            'Visitable ID: ${inspection.visitableId}\n'
+            'Coordinates: (${inspection.latitude}, ${inspection.longitude})\n'
+            'Visit History Count: ${inspection.visitHistory.length}\n'
+            'Visit History:\n${inspection.visitHistory.asMap().entries.map((e) => '  [${e.key}] ${e.value.visitedAt} - ${e.value.managementType} - ${e.value.status} - ${e.value.comment}').join('\n')}\n'
+            '================================',
           );
 
           final locationLogsState = ref.watch(
@@ -88,6 +104,18 @@ class InspectionDetailScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 12),
                       _StatusChip(status: inspection.status),
+                      if (inspection.visitStateName.trim().isNotEmpty ||
+                          inspection.visitResultCode.trim().isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 8),
+                        _InfoRow(
+                          icon: Icons.flag_circle_outlined,
+                          label: inspection.visitStateName.trim().isNotEmpty
+                              ? inspection.visitStateName
+                              : inspection.visitResultCode,
+                          textColor: colorScheme.onPrimaryContainer,
+                          iconColor: colorScheme.onPrimaryContainer,
+                        ),
+                      ],
                     ],
                   ),
                 ),

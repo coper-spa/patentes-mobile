@@ -13,7 +13,12 @@ class InspectionPoint {
     required this.address,
     required this.visitReasonLabel,
     required this.inspectionType,
+    this.contribuyenteRut = '',
+    this.patentRol = '',
     required this.status,
+    required this.visitStateId,
+    required this.visitStateName,
+    required this.visitResultCode,
     required this.latitude,
     required this.longitude,
     required this.visitHistory,
@@ -30,7 +35,12 @@ class InspectionPoint {
   final String address;
   final String visitReasonLabel;
   final String inspectionType;
+  final String contribuyenteRut;
+  final String patentRol;
   final String status;
+  final String visitStateId;
+  final String visitStateName;
+  final String visitResultCode;
   final double latitude;
   final double longitude;
   final List<InspectionVisit> visitHistory;
@@ -49,6 +59,9 @@ class InspectionPoint {
     final patent = patentArrear['patent'] is Map<String, dynamic>
         ? patentArrear['patent'] as Map<String, dynamic>
         : <String, dynamic>{};
+    final patente = patentArrear['patente'] is Map<String, dynamic>
+      ? patentArrear['patente'] as Map<String, dynamic>
+      : <String, dynamic>{};
     final geolocation = source['geolocation'] is Map<String, dynamic>
         ? source['geolocation'] as Map<String, dynamic>
         : <String, dynamic>{};
@@ -64,6 +77,9 @@ class InspectionPoint {
     final visitable = source['visitable'] is Map<String, dynamic>
         ? source['visitable'] as Map<String, dynamic>
         : <String, dynamic>{};
+    final visitState = source['visit_state'] is Map<String, dynamic>
+      ? source['visit_state'] as Map<String, dynamic>
+      : <String, dynamic>{};
 
     final coordinates = _extractCoordinates(
       source: source,
@@ -121,18 +137,40 @@ class InspectionPoint {
         source['visit_reason_label'],
       ),
       inspectionType: _toText(
-        source['inspection_type'] ??
+        source['visit_reason_label'] ??
+            source['inspection_type'] ??
             patentArrear['patent_type'] ??
+            patentArrear['tipo_patente'] ??
             patent['patent_type'] ??
+            patent['tipo_patente'] ??
+            patent['rol'] ??
             patent['type_name'] ??
             patent['type'] ??
+            patente['patent_type'] ??
+            patente['tipo_patente'] ??
+            patente['rol'] ??
             source['visit_scope'] ??
             source['visit_source'],
+      ),
+      contribuyenteRut: _toText(contribuyente['rut'] ?? source['contribuyente_rut']),
+      patentRol: _toText(
+        patent['rol'] ??
+            patente['rol'] ??
+            source['patent_rol'] ??
+            source['rol_patente'],
       ),
       status: (source['status'] ??
             source['assignment_status'] ??
           patentArrear['current_status'] ??
           '') as String,
+      visitStateId: _toText(source['visit_state_id'] ?? visitState['id']),
+      visitStateName: _toText(
+        source['visit_state_name'] ??
+        visitState['name'] ??
+        visitState['label'] ??
+        source['visit_result_code'],
+      ),
+      visitResultCode: _toText(source['visit_result_code']),
       latitude: coordinates.$1,
       longitude: coordinates.$2,
       visitHistory: history,

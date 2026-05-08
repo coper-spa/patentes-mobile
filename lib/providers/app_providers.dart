@@ -11,6 +11,7 @@ import '../repositories/impl/inspection_log_repository_impl.dart';
 import '../repositories/impl/inspector_repository_impl.dart';
 import '../repositories/inspection_log_repository.dart';
 import '../repositories/inspector_repository.dart';
+import '../services/app_update_service.dart';
 import '../services/auth_oauth_service.dart';
 import '../services/external_navigation_service.dart';
 
@@ -77,4 +78,11 @@ final externalNavigationServiceProvider = Provider<ExternalNavigationService>((
   ref,
 ) {
   return ExternalNavigationService();
+});
+
+final appUpdateServiceProvider = Provider<AppUpdateService>((ref) {
+  return AppUpdateService(
+    config: ref.watch(appConfigProvider),
+    httpClient: ref.watch(httpClientProvider),
+  );
 });

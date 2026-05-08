@@ -7,6 +7,7 @@ abstract class InspectionLogRepository {
   Future<InspectionPoint> getInspectionDetail(String inspectionId);
   Future<List<LookupOption>> getManagementTypes();
   Future<List<LookupOption>> getManagementStatuses();
+  Future<List<LookupOption>> getVisitStates();
   Future<List<LocationManagementLog>> getLocationManagementLogs({
     required String contribuyenteId,
     String? patentId,

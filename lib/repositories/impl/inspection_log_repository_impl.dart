@@ -58,6 +58,24 @@ class InspectionLogRepositoryImpl implements InspectionLogRepository {
   }
 
   @override
+  Future<List<LookupOption>> getVisitStates() async {
+    final json = await apiClient.getJson(
+      config.apiUri(config.visitStatesEndpoint),
+    );
+
+    final rows = _extractRows(json);
+    return rows
+        .map(
+          (row) => LookupOption(
+            value: (row['id'] ?? row['value'] ?? '').toString(),
+            label: (row['name'] ?? row['label'] ?? '').toString(),
+          ),
+        )
+        .where((option) => option.value.isNotEmpty && option.label.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  @override
   Future<void> submitLog(InspectionLogPayload payload) async {
     await apiClient.postJson(
       config.apiUri(config.inspectionLogEndpoint),

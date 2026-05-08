@@ -13,28 +13,89 @@ class InspectorRepositoryImpl implements InspectorRepository {
   final ApiClient apiClient;
 
   @override
-  Future<RouteDaySummary> getDashboardSummary() async {
-    final json = await apiClient.getJson(
-      config.apiUri(config.dashboardEndpoint),
+  Future<RouteDaySummary> getDashboardSummary({
+    String? visitStateId,
+    String? visitResultCode,
+    DateTime? weekStartDate,
+  }) async {
+    final endpointUri = config.apiUri(config.dashboardEndpoint);
+    final uri = _withVisitAssignmentFilters(
+      endpointUri,
+      visitStateId: visitStateId,
+      visitResultCode: visitResultCode,
+      weekStartDate: weekStartDate,
     );
-    _logApiPayload('dashboard', json);
+
+    final json = await apiClient.getJson(
+      uri,
+    );
+    _logApiPayload('dashboard:$uri', json);
 
     final summary = RouteDaySummary.fromJson(json);
-    _logSummary('dashboard', summary);
+    _logSummary('dashboard:$uri', summary);
 
     return summary;
   }
 
   @override
-  Future<RouteDaySummary> getRouteByDate(DateTime date) async {
+  Future<RouteDaySummary> getRouteByDate(
+    DateTime date, {
+    String? visitStateId,
+    String? visitResultCode,
+    DateTime? weekStartDate,
+  }) async {
     final path = config.routeByDatePath(date);
-    final json = await apiClient.getJson(config.apiUri(path));
-    _logApiPayload('routeByDate:$path', json);
+    final endpointUri = config.apiUri(path);
+    final uri = _withVisitAssignmentFilters(
+      endpointUri,
+      visitStateId: visitStateId,
+      visitResultCode: visitResultCode,
+      weekStartDate: weekStartDate ?? _startOfWeekMonday(date),
+    );
+
+    final json = await apiClient.getJson(uri);
+    _logApiPayload('routeByDate:$uri', json);
 
     final summary = RouteDaySummary.fromJson(json);
-    _logSummary('routeByDate:$path', summary);
+    _logSummary('routeByDate:$uri', summary);
 
     return summary;
+  }
+
+  Uri _withVisitAssignmentFilters(
+    Uri uri, {
+    String? visitStateId,
+    String? visitResultCode,
+    DateTime? weekStartDate,
+  }) {
+    final query = Map<String, String>.from(uri.queryParameters);
+
+    if (visitStateId != null && visitStateId.trim().isNotEmpty) {
+      query['visit_state_id'] = visitStateId.trim();
+    }
+
+    if (visitResultCode != null && visitResultCode.trim().isNotEmpty) {
+      query['visit_result_code'] = visitResultCode.trim();
+    }
+
+    if (weekStartDate != null) {
+      query['week_start_date'] = _formatDate(weekStartDate);
+    }
+
+    return uri.replace(queryParameters: query);
+  }
+
+  DateTime _startOfWeekMonday(DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    final shift = normalized.weekday - DateTime.monday;
+    return normalized.subtract(Duration(days: shift));
+  }
+
+  String _formatDate(DateTime value) {
+    final year = value.year.toString().padLeft(4, '0');
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
   }
 
   void _logApiPayload(String source, Map<String, dynamic> payload) {

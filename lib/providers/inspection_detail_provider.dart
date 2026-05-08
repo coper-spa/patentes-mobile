@@ -25,6 +25,11 @@ final managementStatusesProvider =
       return repository.getManagementStatuses();
     });
 
+final visitStatesProvider = FutureProvider<List<LookupOption>>((ref) async {
+  final repository = ref.watch(inspectionLogRepositoryProvider);
+  return repository.getVisitStates();
+});
+
 typedef LocationManagementLogsParams = ({
   String contribuyenteId,
   String? patentId,

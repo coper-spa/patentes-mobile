@@ -54,6 +54,22 @@ class BottomActionSheet extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   _MetaRow(
+                    icon: Icons.badge_outlined,
+                    label: 'Rut contribuyente',
+                    value: point.contribuyenteRut.trim().isEmpty
+                        ? 'Sin rut registrado'
+                        : point.contribuyenteRut,
+                  ),
+                  if (point.patentRol.trim().isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 10),
+                    _MetaRow(
+                      icon: Icons.business_center_outlined,
+                      label: 'Rol patente',
+                      value: point.patentRol,
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  _MetaRow(
                     icon: Icons.info_outline_rounded,
                     label: 'Estado',
                     value: point.status,

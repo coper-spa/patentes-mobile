@@ -5,6 +5,7 @@ import 'dart:io';
 
 import '../models/inspection_log_payload.dart';
 import '../models/inspection_point.dart';
+import '../models/lookup_option.dart';
 import '../providers/dashboard_provider.dart';
 import '../providers/inspection_detail_provider.dart';
 import '../providers/route_map_provider.dart';
@@ -22,12 +23,23 @@ class InspectionLogScreen extends ConsumerStatefulWidget {
 }
 
 class _InspectionLogScreenState extends ConsumerState<InspectionLogScreen> {
+  static const _maxEvidenceBytes = 10 * 1024 * 1024;
+  static const Set<String> _allowedEvidenceExtensions = <String>{
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+    'heic',
+    'heif',
+  };
+
   final _formKey = GlobalKey<FormState>();
   final _observationController = TextEditingController();
   final _imagePicker = ImagePicker();
 
   String? _status;
   String? _managementTypeId;
+  String? _visitStateId;
   bool _isPickingEvidence = false;
   final List<XFile> _evidences = <XFile>[];
   ProviderSubscription<InspectionLogState>? _subscription;
@@ -78,7 +90,7 @@ class _InspectionLogScreenState extends ConsumerState<InspectionLogScreen> {
     if (_managementTypeId == null || _status == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Selecciona tipo de gestion y estado.'),
+          content: Text('No se pudieron cargar los parametros de gestion.'),
         ),
       );
       return;
@@ -108,6 +120,7 @@ class _InspectionLogScreenState extends ConsumerState<InspectionLogScreen> {
       arrearVisitAssignmentId: widget.inspection.id,
       arrearManagementTypeId: _managementTypeId!,
       managementStatus: _status!,
+      visitStateId: _visitStateId,
       managedAt: DateTime.now(),
       observation: _observationController.text.trim(),
       hasEvidence: _evidences.isNotEmpty,
@@ -137,9 +150,7 @@ class _InspectionLogScreenState extends ConsumerState<InspectionLogScreen> {
       }
 
       if (image != null) {
-        setState(() {
-          _evidences.add(image);
-        });
+        await _addValidatedEvidence(image);
       }
     } catch (_) {
       if (mounted) {
@@ -173,14 +184,9 @@ class _InspectionLogScreenState extends ConsumerState<InspectionLogScreen> {
       }
 
       if (images.isNotEmpty) {
-        final existingPaths = _evidences.map((e) => e.path).toSet();
-        final newItems = images
-            .where((image) => !existingPaths.contains(image.path))
-            .toList(growable: false);
-
-        setState(() {
-          _evidences.addAll(newItems);
-        });
+        for (final image in images) {
+          await _addValidatedEvidence(image);
+        }
       }
     } catch (_) {
       if (mounted) {
@@ -207,29 +213,119 @@ class _InspectionLogScreenState extends ConsumerState<InspectionLogScreen> {
     });
   }
 
+  Future<void> _addValidatedEvidence(XFile image) async {
+    final existingPaths = _evidences.map((e) => e.path).toSet();
+    if (existingPaths.contains(image.path)) {
+      return;
+    }
+
+    final extension = image.path.split('.').last.toLowerCase();
+    if (!_allowedEvidenceExtensions.contains(extension)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Formato no permitido. Usa jpg, jpeg, png, webp, heic o heif.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    final file = File(image.path);
+    final size = await file.length();
+    if (size > _maxEvidenceBytes) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('La evidencia supera el maximo de 10 MB.'),
+          ),
+        );
+      }
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _evidences.add(image);
+    });
+  }
+
+  String? _selectEnGestionValue(List<LookupOption> options) {
+    if (options.isEmpty) {
+      return null;
+    }
+
+    for (final option in options) {
+      final normalizedLabel = option.label
+          .toLowerCase()
+          .replaceAll('ó', 'o')
+          .replaceAll('í', 'i')
+          .replaceAll('á', 'a')
+          .replaceAll('é', 'e')
+          .replaceAll('ú', 'u')
+          .replaceAll('_', ' ')
+          .trim();
+      final normalizedValue = option.value
+          .toLowerCase()
+          .replaceAll('ó', 'o')
+          .replaceAll('í', 'i')
+          .replaceAll('á', 'a')
+          .replaceAll('é', 'e')
+          .replaceAll('ú', 'u')
+          .replaceAll('_', ' ')
+          .trim();
+
+      if (normalizedLabel.contains('en gestion') ||
+          normalizedValue.contains('en gestion')) {
+        return option.value;
+      }
+    }
+
+    return options.first.value;
+  }
+
   @override
   Widget build(BuildContext context) {
     final logState = ref.watch(inspectionLogProvider);
     final managementTypesAsync = ref.watch(managementTypesProvider);
     final statusesAsync = ref.watch(managementStatusesProvider);
+    final visitStatesAsync = ref.watch(visitStatesProvider);
     final scheme = Theme.of(context).colorScheme;
 
     final managementTypeOptions = managementTypesAsync.maybeWhen(
       data: (options) => options,
-      orElse: () => const [],
+      orElse: () => const <LookupOption>[],
     );
 
     final statusOptions = statusesAsync.maybeWhen(
       data: (options) => options,
-      orElse: () => const [],
+      orElse: () => const <LookupOption>[],
     );
 
     if (_managementTypeId == null && managementTypeOptions.isNotEmpty) {
-      _managementTypeId = managementTypeOptions.first.value;
+      _managementTypeId = _selectEnGestionValue(managementTypeOptions);
     }
 
     if (_status == null && statusOptions.isNotEmpty) {
-      _status = statusOptions.first.value;
+      _status = _selectEnGestionValue(statusOptions);
+    }
+
+    final visitStateOptions = visitStatesAsync.maybeWhen(
+      data: (options) => options,
+      orElse: () => const <LookupOption>[],
+    );
+
+    if (_visitStateId == null) {
+      if (widget.inspection.visitStateId.trim().isNotEmpty) {
+        _visitStateId = widget.inspection.visitStateId;
+      } else if (visitStateOptions.isNotEmpty) {
+        _visitStateId = visitStateOptions.first.value;
+      }
     }
 
     return Scaffold(
@@ -267,56 +363,6 @@ class _InspectionLogScreenState extends ConsumerState<InspectionLogScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(
-                    'Tipo de gestion',
-                    style: TextStyle(
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  managementTypesAsync.when(
-                    data: (options) {
-                      if (options.isEmpty) {
-                        return const Text(
-                          'No hay tipos de gestion disponibles.',
-                        );
-                      }
-
-                      return DropdownButtonFormField<String>(
-                        initialValue: _managementTypeId,
-                        decoration: const InputDecoration(
-                          labelText: 'Tipo de gestion',
-                          prefixIcon: Icon(Icons.assignment_outlined),
-                        ),
-                        items: options
-                            .map(
-                              (option) => DropdownMenuItem<String>(
-                                value: option.value,
-                                child: Text(option.label),
-                              ),
-                            )
-                            .toList(growable: false),
-                        onChanged: (value) {
-                          setState(() {
-                            _managementTypeId = value;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Selecciona un tipo de gestion.';
-                          }
-                          return null;
-                        },
-                      );
-                    },
-                    loading: () => const LinearProgressIndicator(),
-                    error: (error, stack) => Text(
-                      'No se pudieron cargar los tipos: $error',
-                      style: TextStyle(color: scheme.error),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
                   TextFormField(
                     controller: _observationController,
                     maxLines: 4,
@@ -425,44 +471,57 @@ class _InspectionLogScreenState extends ConsumerState<InspectionLogScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Estado del punto',
+                    'Estado de visita',
                     style: TextStyle(
                       color: scheme.primary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 10),
-                  statusesAsync.when(
+                  visitStatesAsync.when(
                     data: (options) {
                       if (options.isEmpty) {
-                        return const Text('No hay estados disponibles.');
+                        return const Text(
+                          'No hay estados de visita disponibles.',
+                        );
                       }
 
-                      return Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: options.map((option) {
-                          final isSelected = _status == option.value;
-                          return ChoiceChip(
-                            selected: isSelected,
-                            onSelected: (_) {
-                              setState(() => _status = option.value);
-                            },
-                            label: Text(option.label),
-                          );
-                        }).toList(growable: false),
+                      return DropdownButtonFormField<String>(
+                        initialValue: _visitStateId,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Estado de visita',
+                          prefixIcon: Icon(Icons.flag_circle_outlined),
+                        ),
+                        items: options
+                            .map(
+                              (option) => DropdownMenuItem<String>(
+                                value: option.value,
+                                child: Text(
+                                  option.label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            )
+                            .toList(growable: false),
+                        onChanged: (value) {
+                          setState(() {
+                            _visitStateId = value;
+                          });
+                        },
                       );
                     },
                     loading: () => const LinearProgressIndicator(),
                     error: (error, stack) => Text(
-                      'No se pudieron cargar los estados: $error',
+                      'No se pudieron cargar los estados de visita: $error',
                       style: TextStyle(color: scheme.error),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 6),
             AppButton(
               label: 'Guardar gestion',
               icon: Icons.task_alt_rounded,

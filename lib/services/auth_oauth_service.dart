@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
 import 'package:app_links/app_links.dart';
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/config/app_config.dart';
@@ -15,6 +15,7 @@ class AuthOAuthService {
 
   final AppConfig config;
   final http.Client httpClient;
+  final AppLinks _appLinks = AppLinks();
 
   Future<AuthTokens> authenticateWithPkce() async {
     final pkce = PkceUtil.generate();
@@ -148,16 +149,19 @@ class AuthOAuthService {
     Uri authUri,
     String expectedState,
   ) async {
-    final appLinks = AppLinks();
-    final initialUri = await appLinks.getInitialLink();
+    final initialUri = await _appLinks.getInitialLink();
     if (_isCallbackUri(initialUri)) {
       return _extractCodeOrThrow(initialUri!, expectedState);
     }
 
     final completer = Completer<String>();
-    late final StreamSubscription<Uri> sub;
-    sub = appLinks.uriLinkStream.listen(
+    late final StreamSubscription<Uri?> sub;
+    sub = _appLinks.uriLinkStream.listen(
       (uri) {
+        if (uri == null) {
+          return;
+        }
+
         if (!_isCallbackUri(uri)) {
           return;
         }

@@ -15,10 +15,12 @@ class AppConfig {
     required this.meEndpoint,
     required this.dashboardEndpoint,
     required this.routeByDateEndpoint,
+    required this.versionCheckEndpoint,
     required this.inspectionDetailEndpoint,
     required this.inspectionLogEndpoint,
     required this.managementTypesEndpoint,
     required this.managementStatusesEndpoint,
+    required this.visitStatesEndpoint,
     required this.contribuyenteManagementLogsEndpoint,
   });
 
@@ -36,6 +38,7 @@ class AppConfig {
 
   final String meEndpoint;
   final String dashboardEndpoint;
+  final String versionCheckEndpoint;
 
   // Usa placeholders: {date} y {inspectionId}
   final String routeByDateEndpoint;
@@ -43,6 +46,7 @@ class AppConfig {
   final String inspectionLogEndpoint;
   final String managementTypesEndpoint;
   final String managementStatusesEndpoint;
+  final String visitStatesEndpoint;
   final String contribuyenteManagementLogsEndpoint;
 
   factory AppConfig.fromEnvironment() {
@@ -59,6 +63,10 @@ class AppConfig {
       revokeEndpoint: _readValue('OAUTH_REVOKE_ENDPOINT'),
       meEndpoint: _readValue('API_ME_ENDPOINT'),
       dashboardEndpoint: _readValue('API_DASHBOARD_ENDPOINT'),
+      versionCheckEndpoint: _readValue(
+        'API_VERSION_CHECK_ENDPOINT',
+        defaultValue: '/api/v1/app/version-check',
+      ),
       routeByDateEndpoint: _readValue('API_ROUTE_BY_DATE_ENDPOINT'),
       inspectionDetailEndpoint: _readValue('API_INSPECTION_DETAIL_ENDPOINT'),
       inspectionLogEndpoint: _readValue('API_INSPECTION_LOG_ENDPOINT'),
@@ -69,6 +77,10 @@ class AppConfig {
       managementStatusesEndpoint: _readValue(
         'API_MANAGEMENT_STATUSES_ENDPOINT',
         defaultValue: '/api/v1/management-logs/statuses',
+      ),
+      visitStatesEndpoint: _readValue(
+        'API_VISIT_STATES_ENDPOINT',
+        defaultValue: '/api/v1/visit-states',
       ),
       contribuyenteManagementLogsEndpoint: _readValue(
         'API_CONTRIBUYENTE_MANAGEMENT_LOGS_ENDPOINT',
@@ -119,11 +131,13 @@ class AppConfig {
       'OAUTH_REVOKE_ENDPOINT': revokeEndpoint,
       'API_ME_ENDPOINT': meEndpoint,
       'API_DASHBOARD_ENDPOINT': dashboardEndpoint,
+      'API_VERSION_CHECK_ENDPOINT': versionCheckEndpoint,
       'API_ROUTE_BY_DATE_ENDPOINT': routeByDateEndpoint,
       'API_INSPECTION_DETAIL_ENDPOINT': inspectionDetailEndpoint,
       'API_INSPECTION_LOG_ENDPOINT': inspectionLogEndpoint,
       'API_MANAGEMENT_TYPES_ENDPOINT': managementTypesEndpoint,
       'API_MANAGEMENT_STATUSES_ENDPOINT': managementStatusesEndpoint,
+      'API_VISIT_STATES_ENDPOINT': visitStatesEndpoint,
       'API_CONTRIBUYENTE_MANAGEMENT_LOGS_ENDPOINT':
           contribuyenteManagementLogsEndpoint,
     };
