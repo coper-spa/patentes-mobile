@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart' show LatLng;
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:developer' as developer;
 
 import '../models/inspection_point.dart';
 import '../providers/app_providers.dart';
@@ -139,11 +138,6 @@ class _RouteMapScreenState extends ConsumerState<RouteMapScreen> {
                     !(point.latitude == 0 && point.longitude == 0),
               )
               .toList(growable: false);
-
-          developer.log(
-            'routePoints=${route.points.length} georeferencedPoints=${georeferencedPoints.length}',
-            name: 'RouteMapScreen.points',
-          );
 
           final hasRouteData = route.hasRoute && route.points.isNotEmpty;
           final hasMapPoints = georeferencedPoints.isNotEmpty;

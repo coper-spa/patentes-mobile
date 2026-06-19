@@ -10,6 +10,8 @@ class InspectionLogPayload {
     required this.managedAt,
     required this.observation,
     this.hasEvidence,
+    this.lat,
+    this.long,
   });
 
   final String? patentArrearId;
@@ -22,6 +24,41 @@ class InspectionLogPayload {
   final DateTime managedAt;
   final String observation;
   final bool? hasEvidence;
+  final double? lat;
+  final double? long;
+
+  InspectionLogPayload copyWith({
+    String? patentArrearId,
+    String? visitableType,
+    String? visitableId,
+    String? arrearVisitAssignmentId,
+    String? arrearManagementTypeId,
+    String? managementStatus,
+    String? visitStateId,
+    DateTime? managedAt,
+    String? observation,
+    bool? hasEvidence,
+    double? lat,
+    double? long,
+    bool clearVisitStateId = false,
+  }) {
+    return InspectionLogPayload(
+      patentArrearId: patentArrearId ?? this.patentArrearId,
+      visitableType: visitableType ?? this.visitableType,
+      visitableId: visitableId ?? this.visitableId,
+      arrearVisitAssignmentId:
+          arrearVisitAssignmentId ?? this.arrearVisitAssignmentId,
+      arrearManagementTypeId:
+          arrearManagementTypeId ?? this.arrearManagementTypeId,
+      managementStatus: managementStatus ?? this.managementStatus,
+      visitStateId: clearVisitStateId ? null : (visitStateId ?? this.visitStateId),
+      managedAt: managedAt ?? this.managedAt,
+      observation: observation ?? this.observation,
+      hasEvidence: hasEvidence ?? this.hasEvidence,
+      lat: lat ?? this.lat,
+      long: long ?? this.long,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     final payload = <String, dynamic>{
@@ -50,6 +87,14 @@ class InspectionLogPayload {
 
     if (hasEvidence != null) {
       payload['has_evidence'] = hasEvidence;
+    }
+
+    if (lat != null && lat! >= -90 && lat! <= 90) {
+      payload['lat'] = lat;
+    }
+
+    if (long != null && long! >= -180 && long! <= 180) {
+      payload['long'] = long;
     }
 
     return payload;

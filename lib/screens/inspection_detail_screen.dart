@@ -23,26 +23,6 @@ class InspectionDetailScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Detalle de inspeccion')),
       body: detailState.when(
         data: (inspection) {
-          debugPrint(
-            '[InspectionDetailScreen] === INSPECTION DETAIL DATA ===\n'
-            'ID: ${inspection.id}\n'
-            'Business: ${inspection.businessName}\n'
-            'Address: ${inspection.address}\n'
-            'Type: ${inspection.inspectionType}\n'
-            'Reason: ${inspection.visitReasonLabel}\n'
-            'Status: ${inspection.status}\n'
-            'Sequence: ${inspection.sequence}\n'
-            'Contribuyente ID: ${inspection.contribuyenteId}\n'
-            'Patent ID: ${inspection.patentId}\n'
-            'Patent Arrear ID: ${inspection.patentArrearId}\n'
-            'Visitable Type: ${inspection.visitableType}\n'
-            'Visitable ID: ${inspection.visitableId}\n'
-            'Coordinates: (${inspection.latitude}, ${inspection.longitude})\n'
-            'Visit History Count: ${inspection.visitHistory.length}\n'
-            'Visit History:\n${inspection.visitHistory.asMap().entries.map((e) => '  [${e.key}] ${e.value.visitedAt} - ${e.value.managementType} - ${e.value.status} - ${e.value.comment}').join('\n')}\n'
-            '================================',
-          );
-
           final locationLogsState = ref.watch(
             locationManagementLogsProvider(
               (

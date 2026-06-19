@@ -24,6 +24,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>NSCameraUsageDescription</key>
 	<string>La app necesita acceder a la camara para adjuntar evidencia fotografica en la gestion.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>La app usa tu ubicacion para registrar coordenadas de la gestion en terreno.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

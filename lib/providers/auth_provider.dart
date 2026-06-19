@@ -60,6 +60,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final profile = await authRepository
           .getProfile()
           .timeout(_profileLoadTimeout);
+      await ref
+          .read(inspectorGroupSessionProvider.notifier)
+          .syncWithProfile(profile);
       state = AuthState(status: AuthStatus.authenticated, profile: profile);
     } on TimeoutException {
       state = const AuthState(
@@ -71,6 +74,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       try {
         final authRepository = ref.read(authRepositoryProvider);
         await authRepository.logout();
+        await ref.read(inspectorGroupSessionProvider.notifier).clearSession();
       } catch (_) {
         // Si falla provider/config, igual salimos del estado checking.
       }
@@ -91,6 +95,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final profile = await authRepository
           .getProfile()
           .timeout(_profileLoadTimeout);
+      await ref
+          .read(inspectorGroupSessionProvider.notifier)
+          .syncWithProfile(profile);
       state = AuthState(
         status: AuthStatus.authenticated,
         profile: profile,
@@ -117,6 +124,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     final authRepository = ref.read(authRepositoryProvider);
     await authRepository.logout();
+    await ref.read(inspectorGroupSessionProvider.notifier).clearSession();
 
     state = const AuthState(status: AuthStatus.unauthenticated, isBusy: false);
   }

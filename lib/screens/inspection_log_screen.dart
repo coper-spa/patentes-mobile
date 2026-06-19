@@ -74,6 +74,15 @@ class _InspectionLogScreenState extends ConsumerState<InspectionLogScreen> {
             ),
           );
         }
+
+        if (next.warningMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(next.warningMessage!),
+              backgroundColor: Colors.orange.shade700,
+            ),
+          );
+        }
       },
     );
   }

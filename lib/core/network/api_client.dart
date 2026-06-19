@@ -6,28 +6,36 @@ import '../errors/app_exception.dart';
 
 typedef RefreshTokenCallback = Future<String?> Function();
 typedef AccessTokenProvider = Future<String?> Function();
+typedef InspectorSessionProvider = bool Function();
+typedef ActiveInspectorGroupProvider = String? Function();
 
 class ApiClient {
   ApiClient({
     required this.httpClient,
     required this.getAccessToken,
     required this.refreshAccessToken,
+    required this.isInspectorSession,
+    required this.getActiveInspectorGroupId,
   });
 
   final http.Client httpClient;
   final AccessTokenProvider getAccessToken;
   final RefreshTokenCallback refreshAccessToken;
+  final InspectorSessionProvider isInspectorSession;
+  final ActiveInspectorGroupProvider getActiveInspectorGroupId;
 
   Future<Map<String, dynamic>> getJson(Uri uri) async {
+    final resolvedUri = _withInspectorGroupQueryIfRequired(uri);
     final response = await _sendAuthorized(
-      (headers) => httpClient.get(uri, headers: headers),
+      (headers) => httpClient.get(resolvedUri, headers: headers),
     );
     return _decodeJsonObject(response.body);
   }
 
   Future<List<dynamic>> getJsonList(Uri uri) async {
+    final resolvedUri = _withInspectorGroupQueryIfRequired(uri);
     final response = await _sendAuthorized(
-      (headers) => httpClient.get(uri, headers: headers),
+      (headers) => httpClient.get(resolvedUri, headers: headers),
     );
     return _decodeJsonList(response.body);
   }
@@ -36,9 +44,18 @@ class ApiClient {
     Uri uri,
     Map<String, dynamic> payload,
   ) async {
+    final resolvedUri = _withInspectorGroupQueryIfRequired(uri);
+    final resolvedPayload = _withInspectorGroupPayloadIfRequired(
+      uri,
+      payload,
+    );
     final response = await _sendAuthorized(
       (headers) =>
-          httpClient.post(uri, headers: headers, body: jsonEncode(payload)),
+          httpClient.post(
+            resolvedUri,
+            headers: headers,
+            body: jsonEncode(resolvedPayload),
+          ),
     );
     return _decodeJsonObject(response.body);
   }
@@ -49,13 +66,14 @@ class ApiClient {
     required String filePath,
     Map<String, String>? fields,
   }) async {
+    final resolvedUri = _withInspectorGroupQueryIfRequired(uri);
     final token = await getAccessToken();
     if (token == null || token.isEmpty) {
       throw const AppException('No hay sesion activa.');
     }
 
     var response = await _sendMultipart(
-      uri,
+      resolvedUri,
       token: token,
       fileField: fileField,
       filePath: filePath,
@@ -72,7 +90,7 @@ class ApiClient {
       }
 
       response = await _sendMultipart(
-        uri,
+        resolvedUri,
         token: newToken,
         fileField: fileField,
         filePath: filePath,
@@ -94,6 +112,93 @@ class ApiClient {
     }
 
     return _decodeJsonObject(body);
+  }
+
+  Uri _withInspectorGroupQueryIfRequired(Uri uri) {
+    if (!_needsInspectorGroupInQuery(uri)) {
+      return uri;
+    }
+
+    final groupId = _requireActiveInspectorGroupId();
+    final query = Map<String, String>.from(uri.queryParameters);
+    query.putIfAbsent('inspector_group_id', () => groupId);
+    return uri.replace(queryParameters: query);
+  }
+
+  Map<String, dynamic> _withInspectorGroupPayloadIfRequired(
+    Uri uri,
+    Map<String, dynamic> payload,
+  ) {
+    if (!_needsInspectorGroupInBody(uri)) {
+      return payload;
+    }
+
+    final groupId = _requireActiveInspectorGroupId();
+    final mapped = Map<String, dynamic>.from(payload);
+    mapped.putIfAbsent('inspector_group_id', () => groupId);
+    return mapped;
+  }
+
+  String _requireActiveInspectorGroupId() {
+    if (!isInspectorSession()) {
+      return '';
+    }
+
+    final groupId = getActiveInspectorGroupId()?.trim();
+    if (groupId == null || groupId.isEmpty) {
+      throw const AppException(
+        'Debes seleccionar un grupo inspector activo para continuar.',
+      );
+    }
+
+    return groupId;
+  }
+
+  bool _needsInspectorGroupInQuery(Uri uri) {
+    if (!isInspectorSession()) {
+      return false;
+    }
+
+    final path = _normalizedPath(uri.path);
+
+    final isVisitAssignmentsList = path == '/api/v1/visit-assignments';
+    final isVisitAssignmentsDetail = RegExp(
+      r'^/api/v1/visit-assignments/[^/]+$',
+    ).hasMatch(path);
+    final isVisitAssignmentEvidences = RegExp(
+      r'^/api/v1/visit-assignments/[^/]+/evidences$',
+    ).hasMatch(path);
+    final isManagementLogsList = path == '/api/v1/management-logs';
+    final isManagementLogsDetail = RegExp(
+      r'^/api/v1/management-logs/[^/]+$',
+    ).hasMatch(path);
+    final isContribuyenteManagementLogs = RegExp(
+      r'^/api/v1/contribuyentes/[^/]+/management-logs$',
+    ).hasMatch(path);
+
+    return isVisitAssignmentsList ||
+        isVisitAssignmentsDetail ||
+        isVisitAssignmentEvidences ||
+        isManagementLogsList ||
+        isManagementLogsDetail ||
+        isContribuyenteManagementLogs;
+  }
+
+  bool _needsInspectorGroupInBody(Uri uri) {
+    if (!isInspectorSession()) {
+      return false;
+    }
+
+    final path = _normalizedPath(uri.path);
+    return path == '/api/v1/management-logs';
+  }
+
+  String _normalizedPath(String path) {
+    if (path.length > 1 && path.endsWith('/')) {
+      return path.substring(0, path.length - 1);
+    }
+
+    return path;
   }
 
   Future<http.StreamedResponse> _sendMultipart(

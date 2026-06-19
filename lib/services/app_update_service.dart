@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
@@ -21,11 +20,6 @@ class AppUpdateService {
     final buildNumber = packageInfo.buildNumber.trim();
 
     if (platform == null) {
-      _logCheck(
-        platform: 'unsupported',
-        currentVersion: currentVersion,
-        updateType: AppUpdateType.none,
-      );
       return AppUpdateInfo.none(
         platform: 'unsupported',
         currentVersion: currentVersion,
@@ -50,12 +44,6 @@ class AppUpdateService {
       );
 
       if (response.statusCode < 200 || response.statusCode > 299) {
-        _logCheck(
-          platform: platform,
-          currentVersion: currentVersion,
-          updateType: AppUpdateType.none,
-          details: 'http_status=${response.statusCode}',
-        );
         return AppUpdateInfo.none(
           platform: platform,
           currentVersion: currentVersion,
@@ -65,12 +53,6 @@ class AppUpdateService {
 
       final decoded = jsonDecode(response.body);
       if (decoded is! Map<String, dynamic>) {
-        _logCheck(
-          platform: platform,
-          currentVersion: currentVersion,
-          updateType: AppUpdateType.none,
-          details: 'invalid_json_shape',
-        );
         return AppUpdateInfo.none(
           platform: platform,
           currentVersion: currentVersion,
@@ -92,20 +74,8 @@ class AppUpdateService {
         message: _toText(payload['message']),
       );
 
-      _logCheck(
-        platform: platform,
-        currentVersion: currentVersion,
-        updateType: info.updateType,
-      );
-
       return info;
     } catch (e) {
-      _logCheck(
-        platform: platform,
-        currentVersion: currentVersion,
-        updateType: AppUpdateType.none,
-        details: 'exception=$e',
-      );
       return AppUpdateInfo.none(
         platform: platform,
         currentVersion: currentVersion,
@@ -169,21 +139,5 @@ class AppUpdateService {
   String? _toText(Object? value) {
     final text = (value ?? '').toString().trim();
     return text.isEmpty ? null : text;
-  }
-
-  void _logCheck({
-    required String platform,
-    required String currentVersion,
-    required AppUpdateType updateType,
-    String? details,
-  }) {
-    final suffix = details == null || details.trim().isEmpty
-        ? ''
-        : ' $details';
-
-    developer.log(
-      'platform=$platform current_version=$currentVersion update_type=${updateType.name}$suffix',
-      name: 'AppUpdateService.versionCheck',
-    );
   }
 }

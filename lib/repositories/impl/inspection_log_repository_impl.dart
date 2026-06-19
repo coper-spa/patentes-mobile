@@ -5,7 +5,6 @@ import '../../models/inspection_point.dart';
 import '../../models/location_management_log.dart';
 import '../../models/lookup_option.dart';
 import '../inspection_log_repository.dart';
-import 'package:flutter/foundation.dart';
 
 class InspectionLogRepositoryImpl implements InspectionLogRepository {
   InspectionLogRepositoryImpl({required this.config, required this.apiClient});
@@ -113,9 +112,6 @@ class InspectionLogRepositoryImpl implements InspectionLogRepository {
     int perPage = 20,
   }) async {
     if (contribuyenteId.trim().isEmpty) {
-      debugPrint(
-        '[InspectionLogRepository.locationManagementLogs] skip: contribuyenteId vacio para consulta de gestiones previas',
-      );
       return const <LocationManagementLog>[];
     }
 
@@ -132,15 +128,8 @@ class InspectionLogRepositoryImpl implements InspectionLogRepository {
     final path = config.contribuyenteManagementLogsPath(contribuyenteId.trim());
     final uri = config.apiUri(path).replace(queryParameters: query);
 
-    debugPrint(
-      '[InspectionLogRepository.locationManagementLogs] requestUri=$uri',
-    );
-
     final json = await apiClient.getJson(uri);
     final rows = _extractRows(json);
-    debugPrint(
-      '[InspectionLogRepository.locationManagementLogs] responseRows=${rows.length}',
-    );
 
     return rows
         .map(LocationManagementLog.fromJson)

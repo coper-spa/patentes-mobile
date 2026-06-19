@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:developer' as developer;
-
 import '../../core/config/app_config.dart';
 import '../../core/network/api_client.dart';
 import '../../models/route_day_summary.dart';
@@ -26,15 +23,8 @@ class InspectorRepositoryImpl implements InspectorRepository {
       weekStartDate: weekStartDate,
     );
 
-    final json = await apiClient.getJson(
-      uri,
-    );
-    _logApiPayload('dashboard:$uri', json);
-
-    final summary = RouteDaySummary.fromJson(json);
-    _logSummary('dashboard:$uri', summary);
-
-    return summary;
+    final json = await apiClient.getJson(uri);
+    return RouteDaySummary.fromJson(json);
   }
 
   @override
@@ -54,12 +44,7 @@ class InspectorRepositoryImpl implements InspectorRepository {
     );
 
     final json = await apiClient.getJson(uri);
-    _logApiPayload('routeByDate:$uri', json);
-
-    final summary = RouteDaySummary.fromJson(json);
-    _logSummary('routeByDate:$uri', summary);
-
-    return summary;
+    return RouteDaySummary.fromJson(json);
   }
 
   Uri _withVisitAssignmentFilters(
@@ -96,21 +81,5 @@ class InspectorRepositoryImpl implements InspectorRepository {
     final month = value.month.toString().padLeft(2, '0');
     final day = value.day.toString().padLeft(2, '0');
     return '$year-$month-$day';
-  }
-
-  void _logApiPayload(String source, Map<String, dynamic> payload) {
-    developer.log(
-      jsonEncode(payload),
-      name: 'InspectorRepository.$source.apiPayload',
-    );
-  }
-
-  void _logSummary(String source, RouteDaySummary summary) {
-    developer.log(
-      'date=${summary.date.toIso8601String()} hasRoute=${summary.hasRoute} '
-      'totalPoints=${summary.totalPoints} completedPoints=${summary.completedPoints} '
-      'nextInspectionId=${summary.nextInspection?.id ?? 'none'}',
-      name: 'InspectorRepository.$source.summary',
-    );
   }
 }

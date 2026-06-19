@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/app_providers.dart';
 import '../providers/auth_provider.dart';
+import '../providers/calendar_provider.dart';
+import '../providers/route_map_provider.dart';
+import '../providers/dashboard_provider.dart';
 import '../screens/calendar_screen.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/login_screen.dart';
@@ -20,6 +23,7 @@ class AppHamburgerDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final appConfig = ref.watch(appConfigProvider);
+    final groupSession = ref.watch(inspectorGroupSessionProvider);
     final colorScheme = Theme.of(context).colorScheme;
 
     return Drawer(
@@ -90,11 +94,99 @@ class AppHamburgerDrawer extends ConsumerWidget {
                         fontSize: 13,
                       ),
                     ),
+                    if (groupSession.isInspector &&
+                        groupSession.activeGroupName != null) ...<Widget>[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          'Grupo activo: ${groupSession.activeGroupName}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 8),
+            if (groupSession.isInspector && groupSession.availableGroups.isNotEmpty)
+              _DrawerOption(
+                delayMs: 20,
+                icon: Icons.groups_2_outlined,
+                label: 'Cambiar grupo inspector',
+                selected: false,
+                onTap: () async {
+                  HapticFeedback.selectionClick();
+                  Navigator.of(context).pop();
+                  final selected = await showModalBottomSheet<String>(
+                    context: context,
+                    showDragHandle: true,
+                    builder: (sheetContext) {
+                      return SafeArea(
+                        child: ListView(
+                          shrinkWrap: true,
+                          children: <Widget>[
+                            const ListTile(
+                              title: Text(
+                                'Selecciona grupo inspector activo',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            ...groupSession.availableGroups.map((group) {
+                              final isActive =
+                                  group.id == groupSession.activeGroupId;
+                              return ListTile(
+                                leading: Icon(
+                                  isActive
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_unchecked,
+                                ),
+                                title: Text(group.name),
+                                onTap: () => Navigator.of(sheetContext).pop(group.id),
+                              );
+                            }),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+
+                  if (selected == null || selected == groupSession.activeGroupId) {
+                    return;
+                  }
+
+                  await ref
+                      .read(inspectorGroupSessionProvider.notifier)
+                      .setActiveGroupId(selected);
+                  ref.invalidate(routeMapProvider);
+                  ref.invalidate(calendarProvider);
+                  ref.invalidate(dashboardProvider);
+
+                  if (!context.mounted) {
+                    return;
+                  }
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Grupo inspector activo actualizado.'),
+                    ),
+                  );
+                },
+              ),
             _DrawerOption(
               delayMs: 40,
               icon: Icons.map_outlined,

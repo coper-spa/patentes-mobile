@@ -8,6 +8,8 @@ class LocationManagementLog {
     required this.managedAt,
     required this.inspectorName,
     required this.hasEvidence,
+    required this.managementLatitude,
+    required this.managementLongitude,
   });
 
   final String id;
@@ -18,6 +20,8 @@ class LocationManagementLog {
   final DateTime managedAt;
   final String inspectorName;
   final bool hasEvidence;
+  final double? managementLatitude;
+  final double? managementLongitude;
 
   factory LocationManagementLog.fromJson(Map<String, dynamic> json) {
     final managementType = json['management_type'] is Map<String, dynamic>
@@ -66,6 +70,12 @@ class LocationManagementLog {
           DateTime.now(),
       inspectorName: (user['name'] ?? json['managed_by_name'] ?? '').toString(),
       hasEvidence: (json['has_evidence'] as bool?) ?? false,
+      managementLatitude: _toDouble(
+        json['management_latitude'] ?? json['lat'] ?? json['latitude'],
+      ),
+      managementLongitude: _toDouble(
+        json['management_longitude'] ?? json['long'] ?? json['longitude'],
+      ),
     );
   }
 
@@ -106,5 +116,22 @@ class LocationManagementLog {
             ? word
             : '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}')
         .join(' ');
+  }
+
+  static double? _toDouble(Object? value) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    final asText = value.toString().trim().replaceAll(',', '.');
+    if (asText.isEmpty) {
+      return null;
+    }
+
+    return double.tryParse(asText);
   }
 }
