@@ -1,7 +1,7 @@
 name: inspectores_municipales_app
 description: App Flutter para inspectores municipales con OAuth2 PKCE y rutas de inspeccion.
 publish_to: 'none'
-version: 1.1.0+2
+version: 1.2.0+3
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -35,9 +35,9 @@ flutter_launcher_icons:
   android: true
   ios: true
   remove_alpha_ios: true
-  image_path: assets/branding/logo_municipalidad.png
+  image_path: assets/branding/L_gestion_inteligente_cobropatentes_vertical.png
   adaptive_icon_background: "#005B8F"
-  adaptive_icon_foreground: assets/branding/app_icon_geo.png
+  adaptive_icon_foreground: assets/branding/L_gestion_inteligente_cobropatentes_vertical.png
 
 flutter:
   uses-material-design: true
